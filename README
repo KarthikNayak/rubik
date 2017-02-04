@@ -1,0 +1,12 @@
+Rubik's cube solver
+
+To Run:
+
+1. git clone the project
+2. cd
+3. run `go run main.go`
+
+TODO:
+
+1. Rotational dynamics
+2. Learning
