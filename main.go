@@ -94,6 +94,46 @@ func (c *cube) printCube() {
 	fmt.Println("        ---------")
 }
 
+func swap(a, b *int) {
+	tmp := *a
+	*a, *b = *b, tmp
+}
+
+func swapR(a, b *[3]int) {
+	for i := 0; i < 3; i++ {
+		swap(&a[i], &b[i])
+	}
+}
+
+func transpose(a *[3][3]int) {
+	for i := 0; i < 3; i++ {
+		for j := 0; j < i; j++ {
+			if i != j {
+				swap(&a[i][j], &a[j][i])
+			}
+		}
+	}
+}
+
+func (c *cube) rotateRow(row int) {
+	swapR(&c.b[row], &c.l[row])
+	swapR(&c.r[row], &c.b[row])
+	swapR(&c.f[row], &c.r[row])
+
+	switch row {
+	case 0:
+		transpose(&c.u)
+		for i := 0; i < 3; i++ {
+			swap(&c.u[0][i], &c.u[2][i])
+		}
+	case 2:
+		transpose(&c.d)
+		for i := 0; i < 3; i++ {
+			swap(&c.d[i][0], &c.d[i][2])
+		}
+	}
+}
+
 func main() {
 	var c cube
 	c.init()
