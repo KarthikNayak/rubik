@@ -158,16 +158,20 @@ func createLink(c1, c2 *sq) {
 
 func linkRowsCols(r1, r2, r3, c1, c2, c3 *sq) {
 	tmp1, tmp2, tmp3 := r1, r2, r3
-	for i := 0; i < 6; i++ {
+
+	for i := 0; i < 3; i++ {
 		tmp3.top = tmp2
 		tmp2.top = tmp1
 		tmp1, tmp2, tmp3 = tmp1.r(1), tmp2.r(1), tmp3.r(1)
 	}
-	for i := 0; i < 6; i++ {
+	tmp1, tmp2, tmp3 = tmp1.r(3), tmp2.r(3), tmp3.r(3)
+
+	for i := 0; i < 3; i++ {
 		tmp1.top = tmp2
 		tmp2.top = tmp3
 		tmp1, tmp2, tmp3 = tmp1.r(1), tmp2.r(1), tmp3.r(1)
 	}
+
 	createLink(c1, c1.r(8))
 	createLink(c2, c2.r(6))
 	createLink(c3, c3.r(4))
