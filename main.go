@@ -115,55 +115,69 @@ func transpose(a *[3][3]int) {
 	}
 }
 
-func (c *cube) rotateRow(row int) {
-	swapR(&c.b[row], &c.l[row])
-	swapR(&c.r[row], &c.b[row])
-	swapR(&c.f[row], &c.r[row])
+func rotateHelper(a, b *[3][3]int, inv bool) {
+	for i := 0; i < 3; i++ {
+		if inv != true {
+			swap(&a[0][i], &b[2][i])
+		} else {
+			swap(&a[i][0], &b[i][2])
+		}
+	}
+}
+
+func (c *cube) rotateRow(row int, inv bool) {
+	if inv != true {
+		swapR(&c.b[row], &c.l[row])
+		swapR(&c.r[row], &c.b[row])
+		swapR(&c.f[row], &c.r[row])
+	} else {
+		swapR(&c.f[row], &c.r[row])
+		swapR(&c.r[row], &c.b[row])
+		swapR(&c.b[row], &c.l[row])
+	}
 
 	switch row {
 	case 0:
 		transpose(&c.u)
-		for i := 0; i < 3; i++ {
-			swap(&c.u[0][i], &c.u[2][i])
-		}
+		rotateHelper(&c.u, &c.u, false || inv)
 	case 2:
 		transpose(&c.d)
-		for i := 0; i < 3; i++ {
-			swap(&c.d[i][0], &c.d[i][2])
-		}
+		rotateHelper(&c.d, &c.d, true != inv)
 	}
 }
 
-func swapC(a, b *[3][3]int, col int) {
+func swapC(a, b *[3][3]int, col1, col2 int) {
 	for i := 0; i < 3; i++ {
-		swap(&a[i][col], &b[i][col])
+		swap(&a[i][col1], &b[i][col2])
 	}
 }
 
-func (c *cube) rotateCol(col int) {
-	swapC(&c.f, &c.d, col)
-	swapC(&c.d, &c.b, col)
-	swapC(&c.b, &c.u, col)
+func (c *cube) rotateCol(col int, inv bool) {
+	if inv != true {
+		swapC(&c.f, &c.d, col, col)
+		swapC(&c.d, &c.b, col, 2-col)
+		swapC(&c.b, &c.u, 2-col, col)
+	} else {
+		swapC(&c.b, &c.u, 2-col, col)
+		swapC(&c.d, &c.b, col, 2-col)
+		swapC(&c.f, &c.d, col, col)
+	}
 
 	switch col {
 	case 0:
 		transpose(&c.l)
-		for i := 0; i < 3; i++ {
-			swap(&c.l[0][i], &c.l[2][i])
-		}
+		rotateHelper(&c.l, &c.l, false || inv)
 	case 2:
 		transpose(&c.r)
-		for i := 0; i < 3; i++ {
-			swap(&c.r[i][0], &c.r[i][2])
-		}
+		rotateHelper(&c.r, &c.r, true != inv)
 	}
 }
 
 func main() {
 	var c cube
 	c.init()
-	c.r[0][1] = red
+	c.l[0][2] = red
 	c.printCube()
-	c.rotateCol(2)
+	c.rotateCol(0, true)
 	c.printCube()
 }
