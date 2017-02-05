@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/fatih/color"
 )
 
 const (
 	red     = 0
-	green   = 1
+	white   = 1
 	yellow  = 2
 	blue    = 3
 	magenta = 4
@@ -34,7 +35,7 @@ func initSide(s *[3][3]int, clr int) {
 
 func (c *cube) init() {
 	initSide(&c.f, red)
-	initSide(&c.l, green)
+	initSide(&c.l, white)
 	initSide(&c.r, yellow)
 	initSide(&c.u, blue)
 	initSide(&c.b, magenta)
@@ -43,7 +44,7 @@ func (c *cube) init() {
 
 func colorSq() func(clr int) string {
 	red := color.New(color.FgRed).SprintFunc()
-	green := color.New(color.FgGreen).SprintFunc()
+	white := color.New(color.FgWhite).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
 	blue := color.New(color.FgBlue).SprintFunc()
 	magenta := color.New(color.FgMagenta).SprintFunc()
@@ -54,7 +55,7 @@ func colorSq() func(clr int) string {
 		case 0:
 			return red("■")
 		case 1:
-			return green("■")
+			return white("■")
 		case 2:
 			return yellow("■")
 		case 3:
@@ -99,12 +100,6 @@ func swap(a, b *int) {
 	*a, *b = *b, tmp
 }
 
-func swapR(a, b *[3]int) {
-	for i := 0; i < 3; i++ {
-		swap(&a[i], &b[i])
-	}
-}
-
 func transpose(a *[3][3]int) {
 	for i := 0; i < 3; i++ {
 		for j := 0; j < i; j++ {
@@ -127,13 +122,17 @@ func rotateHelper(a, b *[3][3]int, inv bool) {
 
 func (c *cube) rotateRow(row int, inv bool) {
 	if inv != true {
-		swapR(&c.b[row], &c.l[row])
-		swapR(&c.r[row], &c.b[row])
-		swapR(&c.f[row], &c.r[row])
+		for i := 0; i < 3; i++ {
+			swap(&c.r[row][i], &c.f[row][i])
+			swap(&c.f[row][i], &c.l[row][i])
+			swap(&c.l[row][i], &c.b[row][i])
+		}
 	} else {
-		swapR(&c.f[row], &c.r[row])
-		swapR(&c.r[row], &c.b[row])
-		swapR(&c.b[row], &c.l[row])
+		for i := 0; i < 3; i++ {
+			swap(&c.l[row][i], &c.b[row][i])
+			swap(&c.f[row][i], &c.l[row][i])
+			swap(&c.r[row][i], &c.f[row][i])
+		}
 	}
 
 	switch row {
@@ -146,21 +145,19 @@ func (c *cube) rotateRow(row int, inv bool) {
 	}
 }
 
-func swapC(a, b *[3][3]int, col1, col2 int) {
-	for i := 0; i < 3; i++ {
-		swap(&a[i][col1], &b[i][col2])
-	}
-}
-
 func (c *cube) rotateCol(col int, inv bool) {
 	if inv != true {
-		swapC(&c.f, &c.d, col, col)
-		swapC(&c.d, &c.b, col, 2-col)
-		swapC(&c.b, &c.u, 2-col, col)
+		for i := 0; i < 3; i++ {
+			swap(&c.f[i][col], &c.u[i][col])
+			swap(&c.d[i][col], &c.f[i][col])
+			swap(&c.d[i][col], &c.b[2-i][2-col])
+		}
 	} else {
-		swapC(&c.b, &c.u, 2-col, col)
-		swapC(&c.d, &c.b, col, 2-col)
-		swapC(&c.f, &c.d, col, col)
+		for i := 0; i < 3; i++ {
+			swap(&c.d[i][col], &c.b[2-i][2-col])
+			swap(&c.d[i][col], &c.f[i][col])
+			swap(&c.f[i][col], &c.u[i][col])
+		}
 	}
 
 	switch col {
@@ -173,11 +170,72 @@ func (c *cube) rotateCol(col int, inv bool) {
 	}
 }
 
+func (c *cube) rotateFace(face int, inv bool) {
+	if inv != true {
+		for i := 0; i < 3; i++ {
+			swap(&c.u[2-face][i], &c.r[i][face])
+		}
+		for i := 0; i < 3; i++ {
+			swap(&c.l[i][2-face], &c.u[2-face][2-i])
+			swap(&c.l[i][2-face], &c.d[face][i])
+		}
+	} else {
+		for i := 0; i < 3; i++ {
+			swap(&c.l[i][2-face], &c.d[face][i])
+			swap(&c.l[i][2-face], &c.u[2-face][2-i])
+		}
+		for i := 0; i < 3; i++ {
+			swap(&c.u[2-face][i], &c.r[i][face])
+		}
+	}
+
+	switch face {
+	case 0:
+		transpose(&c.f)
+		rotateHelper(&c.f, &c.f, true != inv)
+	case 2:
+		transpose(&c.b)
+		rotateHelper(&c.b, &c.b, false || inv)
+	}
+
+}
+
+func (c *cube) shuffle(times int, debug bool) {
+	for i := 0; i < times; i++ {
+		mov := rand.Intn(2)
+		switch mov {
+		case 0:
+			val := rand.Intn(3)
+			inv := bool(0 == rand.Intn(2))
+			c.rotateRow(val, inv)
+			if debug {
+				fmt.Println("Row, value: ", val, "inv: ", inv)
+				c.printCube()
+			}
+		case 1:
+			val := rand.Intn(3)
+			inv := bool(0 == rand.Intn(2))
+			c.rotateCol(val, inv)
+			if debug {
+				fmt.Println("Col, value: ", val, "inv: ", inv)
+				c.printCube()
+			}
+		case 2:
+			val := rand.Intn(3)
+			inv := bool(0 == rand.Intn(2))
+			c.rotateFace(val, inv)
+			if debug {
+				fmt.Println("Face, value: ", val, "inv: ", inv)
+				c.printCube()
+			}
+		}
+	}
+}
+
 func main() {
 	var c cube
 	c.init()
-	c.l[0][2] = red
 	c.printCube()
-	c.rotateCol(0, true)
+	c.shuffle(20, false)
 	c.printCube()
 }
